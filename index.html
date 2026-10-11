@@ -84,6 +84,7 @@ select { font: 14px var(--body); color: var(--fg); background: transparent; bord
       <input type="range" id="border" min="0" max="25" step="0.5">
       <span class="val" id="borderVal"></span>
       <div class="seg" id="presets" role="group" aria-label="Border presets">
+        <button type="button" data-p="1">1%</button>
         <button type="button" data-p="5">5%</button>
         <button type="button" data-p="10">10%</button>
         <button type="button" data-p="15">15%</button>
@@ -373,10 +374,10 @@ select { font: 14px var(--body); color: var(--fg); background: transparent; bord
   $("presets").querySelectorAll("button").forEach(function (b) { b.onclick = function () { S.border = +b.dataset.p; sync(); render(); }; });
   $("finish").onchange = function () { S.finish = this.value; render(); };
   $("polaroid").onclick = function () {
-    var keys = ["border", "bottom", "color", "ratio", "orient", "finish", "keyline"];
+    var keys = ["border", "bottom", "ratio", "orient", "finish", "keyline"];
     if (!S.polaroid) {
       S.prev = {}; keys.forEach(function (k) { S.prev[k] = S[k]; });
-      S.border = 6; S.bottom = 22; S.color = "#f9f7f2"; S.ratio = "Original"; S.orient = ""; S.finish = "smooth"; S.keyline = false;
+      S.border = 6; S.bottom = 22; S.ratio = "Original"; S.orient = ""; S.finish = "smooth"; S.keyline = false;
       S.polaroid = true;
     } else {
       keys.forEach(function (k) { if (S.prev && k in S.prev) S[k] = S.prev[k]; });
