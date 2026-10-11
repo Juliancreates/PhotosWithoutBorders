@@ -4,28 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Photos Without Borders</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&display=swap">
 <style>
 /* Layout: a gallery wall. The photo hangs large and centred with a wall label beneath; controls sit in one slim rail below. */
 :root {
-  --wall: #fdfbf6;
+  --wall: #fbfbfa;
   --fg: #1d1b18;
   --muted: #77726a;
   --line: #dcd6c8;
   --ink: #1d1b18;
-  --on-ink: #fdfbf6;
+  --on-ink: #fbfbfa;
   --shadow: rgba(60, 45, 20, .26);
-  --display: "Libre Caslon Display", "Libre Caslon Text", "Iowan Old Style", Georgia, serif;
+  --display: "Special Elite", "American Typewriter", "Courier New", Courier, monospace;
   --body: "Libre Caslon Text", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
   --mono: "Libre Caslon Text", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 img { max-width: 100%; }
-body { margin: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .3 0 0 0 0 .14 0 0 0 .34 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='500'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .35' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .3 0 0 0 0 .2 0 0 0 .2 0'/%3E%3C/filter%3E%3Crect width='500' height='500' filter='url(%23n)'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='700'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .3 0 0 0 0 .2 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='700' height='700' filter='url(%23n)'/%3E%3C/svg%3E"), var(--wall); color: var(--fg); font: 15px/1.45 var(--body); padding-inline: 20px; padding-block: 18px 40px; }
+body { margin: 0; background: #fbfbfa url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='p' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.09' numOctaves='5' seed='7' stitchTiles='stitch'/%3E%3CfeDiffuseLighting surfaceScale='1.3' lighting-color='%23fff'%3E%3CfeDistantLight azimuth='40' elevation='68'/%3E%3C/feDiffuseLighting%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='1' intercept='.055'/%3E%3CfeFuncG type='linear' slope='1' intercept='.055'/%3E%3CfeFuncB type='linear' slope='1' intercept='.055'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='420' height='420' filter='url(%23p)' opacity='.6'/%3E%3C/svg%3E"); color: var(--fg); font: 15px/1.45 var(--body); padding-inline: 20px; padding-block: 18px 40px; }
 .wrap { max-width: 1100px; margin: 0 auto; display: grid; gap: 14px; }
 header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
-h1 { font: 400 32px/1.1 var(--display); margin: 0; }
+h1 { font: 400 28px/1.2 var(--display); margin: 0; opacity: .8; }
 .link { font: 400 14px var(--body); background: none; border: 0; padding: 4px 0; color: var(--fg); cursor: pointer; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--line); }
 .link:hover { text-decoration-color: var(--fg); }
 .wall { display: grid; place-items: center; padding-block: 28px 20px; min-height: 260px; outline: 1px dashed transparent; outline-offset: 0; }
