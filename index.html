@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Photo Border Maker</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a neutral-grey viewing wall (stage + filmstrip) beside a single control panel; stacks on phones. */
+:root {
+  --bg: #e7e7e5;
+  --stage: #d2d2cf;
+  --panel: #f5f5f3;
+  --fg: #1c1c1a;
+  --muted: #62625e;
+  --line: #c9c9c5;
+  --accent: #b5330c;
+  --on-accent: #ffffff;
+  --shadow: rgba(0, 0, 0, .28);
+  --display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161615; --stage: #262625; --panel: #1f1f1e; --fg: #ecece8; --muted: #a2a29c;
+    --line: #3a3a38; --accent: #ff7043; --on-accent: #1a0d08; --shadow: rgba(0, 0, 0, .6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161615; --stage: #262625; --panel: #1f1f1e; --fg: #ecece8; --muted: #a2a29c;
+  --line: #3a3a38; --accent: #ff7043; --on-accent: #1a0d08; --shadow: rgba(0, 0, 0, .6);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.45 var(--body); padding-inline: 16px; padding-block: 20px 40px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 18px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+h1 { font: 700 28px/1.1 var(--display); margin: 0; letter-spacing: -.01em; }
+header p { margin: 0; color: var(--muted); }
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px; align-items: start; }
+@media (max-width: 820px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.left { display: grid; gap: 12px; min-width: 0; }
+.stage { background: var(--stage); border-radius: 6px; padding: 28px; display: grid; place-items: center; min-height: 300px; position: relative; outline: 2px dashed transparent; outline-offset: -8px; }
+.stage.over { outline-color: var(--accent); }
+#preview { max-width: 100%; max-height: 64vh; width: auto; height: auto; box-shadow: 0 6px 24px var(--shadow); display: block; }
+.tag { position: absolute; top: 10px; left: 10px; font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; background: var(--panel); color: var(--muted); padding: 3px 7px; border-radius: 3px; }
+.meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; font: 12px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.meta span { min-width: 0; overflow-wrap: anywhere; }
+.strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.strip button { flex: none; width: 64px; height: 64px; padding: 0; border: 2px solid transparent; border-radius: 4px; background: var(--stage); cursor: pointer; overflow: hidden; color: var(--fg); }
+.strip button[aria-pressed="true"] { border-color: var(--accent); }
+.strip canvas { width: 100%; height: 100%; object-fit: cover; display: block; }
+.strip .add { border: 1.5px dashed var(--line); font: 600 12px var(--body); line-height: 1.2; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; gap: 18px; }
+.field { display: grid; gap: 8px; }
+.field > label, .legend { display: flex; justify-content: space-between; font-weight: 600; font-size: 13px; }
+.val { font: 12px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { font: 500 13px var(--body); padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--fg); cursor: pointer; }
+.chips button[aria-pressed="true"] { background: var(--fg); color: var(--panel); border-color: var(--fg); }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.swatches button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); cursor: pointer; padding: 0; }
+.swatches button[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
+.swatches input[type=color] { width: 38px; height: 32px; padding: 0; border: 1px solid var(--line); border-radius: 4px; background: transparent; cursor: pointer; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.check input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+.actions { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 16px; }
+.btn { font: 600 14px var(--body); padding: 10px 14px; border-radius: 5px; border: 1px solid var(--line); background: transparent; color: var(--fg); cursor: pointer; }
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: default; }
+#status { font-size: 13px; color: var(--muted); min-height: 1.4em; margin: 0; }
+.note { font-size: 12px; color: var(--muted); margin: 0; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <h1>Photo Border Maker</h1>
+    <p>Add a border to one photo or a whole batch. Photos stay on your device.</p>
+  </header>
+
+  <div class="main">
+    <div class="left">
+      <div class="stage" id="stage">
+        <span class="tag" id="sampleTag">Sample photo</span>
+        <canvas id="preview" aria-label="Preview of the bordered photo"></canvas>
+      </div>
+      <div class="meta"><span id="fname"></span><span id="dims"></span></div>
+      <div class="strip" id="strip"></div>
+      <input type="file" id="file" accept="image/*" multiple hidden>
+    </div>
+
+    <div class="panel">
+      <div class="field">
+        <label for="border">Border width <span class="val" id="borderVal"></span></label>
+        <input type="range" id="border" min="0" max="25" step="0.5">
+      </div>
+      <div class="field">
+        <label for="bottom">Extra space below <span class="val" id="bottomVal"></span></label>
+        <input type="range" id="bottom" min="0" max="30" step="0.5">
+      </div>
+      <div class="field">
+        <div class="legend">Border colour <span class="val" id="colorVal"></span></div>
+        <div class="swatches" id="swatches">
+          <input type="color" id="custom" aria-label="Custom colour">
+        </div>
+      </div>
+      <div class="field">
+        <div class="legend">Finished shape</div>
+        <div class="chips" id="ratios"></div>
+      </div>
+      <label class="check" for="keyline"><input type="checkbox" id="keyline"> Thin keyline around the photo</label>
+      <div class="field">
+        <div class="legend">File type</div>
+        <div class="chips" id="formats"></div>
+      </div>
+      <div class="field" id="qualityField">
+        <label for="quality">JPEG quality <span class="val" id="qualityVal"></span></label>
+        <input type="range" id="quality" min="60" max="100" step="1">
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="saveOne">Save this photo</button>
+        <button class="btn" id="saveAll">Save all as a zip</button>
+        <p id="status" role="status" aria-live="polite"></p>
+        <p class="note">Widths are a percentage of the photo's shorter side, so every photo in a batch gets a matching border. Saved at full resolution.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var COLORS = [["White", "#ffffff"], ["Ivory", "#f2eee4"], ["Grey", "#8c8c8a"], ["Charcoal", "#2b2b2b"], ["Black", "#000000"]];
+  var RATIOS = [["Original", 0], ["1:1", 1], ["4:5", 4 / 5], ["5:4", 5 / 4], ["2:3", 2 / 3], ["3:2", 3 / 2], ["9:16", 9 / 16], ["16:9", 16 / 9]];
+  var FORMATS = [["JPEG", "jpg"], ["PNG", "png"]];
+  var S = { border: 6, bottom: 0, color: "#ffffff", ratio: "Original", keyline: false, format: "jpg", quality: 92 };
+  try { Object.assign(S, JSON.parse(localStorage.getItem("border-settings") || "{}")); } catch (e) {}
+  var photos = [], current = 0, isSample = true, previewMax = 1600, busy = false;
+  var downloadsP = (window.claude && window.claude.use) ? window.claude.use("downloads") : Promise.resolve(null);
+
+  function sample() {
+    var c = document.createElement("canvas"); c.width = 1500; c.height = 1000;
+    var x = c.getContext("2d");
+    var g = x.createLinearGradient(0, 0, 0, 1000);
+    g.addColorStop(0, "#27406b"); g.addColorStop(.5, "#e08a5b"); g.addColorStop(.72, "#f6d38f");
+    x.fillStyle = g; x.fillRect(0, 0, 1500, 1000);
+    x.fillStyle = "#fff3cf"; x.beginPath(); x.arc(1010, 640, 70, 0, 7); x.fill();
+    [["#5b5670", 640, 90, .004, 0], ["#3a3850", 730, 70, .006, 2], ["#1e1d2b", 840, 50, .009, 4]].forEach(function (h) {
+      x.fillStyle = h[0]; x.beginPath(); x.moveTo(0, 1000);
+      for (var i = 0; i <= 1500; i += 10) x.lineTo(i, h[1] + Math.sin(i * h[3] + h[4]) * h[2] + Math.sin(i * h[3] * 2.7) * h[2] * .3);
+      x.lineTo(1500, 1000); x.fill();
+    });
+    return { name: "sample.jpg", src: c, w: 1500, h: 1000 };
+  }
+
+  function geo(p) {
+    var s = Math.min(p.w, p.h), b = Math.round(s * S.border / 100), xb = Math.round(s * S.bottom / 100);
+    var W = p.w + 2 * b, H = p.h + 2 * b + xb, R = 0;
+    RATIOS.forEach(function (r) { if (r[0] === S.ratio) R = r[1]; });
+    if (R) { if (W / H < R) W = Math.round(H * R); else H = Math.round(W / R); }
+    return { W: W, H: H, x: Math.round((W - p.w) / 2), y: Math.round((H - xb - p.h) / 2), s: s, b: b };
+  }
+  function contrast(hex) {
+    var n = parseInt(hex.slice(1), 16), l = (.299 * (n >> 16) + .587 * (n >> 8 & 255) + .114 * (n & 255)) / 255;
+    return l > .5 ? "rgba(0,0,0,.5)" : "rgba(255,255,255,.55)";
+  }
+  function draw(canvas, p, k) {
+    var g = geo(p);
+    canvas.width = Math.max(1, Math.round(g.W * k)); canvas.height = Math.max(1, Math.round(g.H * k));
+    var x = canvas.getContext("2d");
+    x.imageSmoothingQuality = "high";
+    x.fillStyle = S.color; x.fillRect(0, 0, canvas.width, canvas.height);
+    x.drawImage(p.src, g.x * k, g.y * k, p.w * k, p.h * k);
+    var gap = Math.max(2, Math.round(g.s * .012));
+    if (S.keyline && Math.min(g.x, g.y) > gap * 1.5) {
+      x.lineWidth = Math.max(1, g.s * .0015 * k); x.strokeStyle = contrast(S.color);
+      x.strokeRect((g.x - gap) * k, (g.y - gap) * k, (p.w + 2 * gap) * k, (p.h + 2 * gap) * k);
+    }
+    return g;
+  }
+
+  function render() {
+    var p = photos[current];
+    var g0 = geo(p), k = Math.min(1, previewMax / Math.max(g0.W, g0.H));
+    var g = draw($("preview"), p, k);
+    $("fname").textContent = p.name + (photos.length > 1 ? "  (" + (current + 1) + " of " + photos.length + ")" : "");
+    $("dims").textContent = p.w + " × " + p.h + " px  →  " + g.W + " × " + g.H + " px";
+    $("borderVal").textContent = S.border + "% · " + g.b + " px";
+    $("bottomVal").textContent = S.bottom + "%";
+    $("colorVal").textContent = S.color.toUpperCase();
+    $("qualityVal").textContent = S.quality;
+    $("qualityField").hidden = S.format !== "jpg";
+    $("sampleTag").hidden = !isSample;
+    $("saveAll").hidden = photos.length < 2;
+    try { localStorage.setItem("border-settings", JSON.stringify(S)); } catch (e) {}
+  }
+
+  function chips(host, list, key, before) {
+    list.forEach(function (item) {
+      var b = document.createElement("button"), v = key === "ratio" ? item[0] : item[1];
+      b.type = "button"; b.dataset.v = v;
+      if (key === "color") { b.style.background = v; b.title = item[0]; b.setAttribute("aria-label", item[0]); }
+      else b.textContent = item[0];
+      b.onclick = function () { S[key] = v; sync(); render(); };
+      host.insertBefore(b, before || null);
+    });
+  }
+  function sync() {
+    [["swatches", "color"], ["ratios", "ratio"], ["formats", "format"]].forEach(function (m) {
+      $(m[0]).querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.v === String(S[m[1]]))); });
+    });
+    $("border").value = S.border; $("bottom").value = S.bottom; $("quality").value = S.quality;
+    $("keyline").checked = S.keyline; $("custom").value = S.color;
+  }
+
+  function strip() {
+    var host = $("strip"); host.textContent = "";
+    photos.forEach(function (p, i) {
+      var b = document.createElement("button"), c = document.createElement("canvas");
+      b.type = "button"; b.setAttribute("aria-label", p.name); b.setAttribute("aria-pressed", String(i === current));
+      var k = 128 / Math.min(p.w, p.h); c.width = 128; c.height = 128;
+      c.getContext("2d").drawImage(p.src, (128 - p.w * k) / 2, (128 - p.h * k) / 2, p.w * k, p.h * k);
+      b.appendChild(c);
+      b.onclick = function () { current = i; strip(); render(); };
+      host.appendChild(b);
+    });
+    var add = document.createElement("button");
+    add.type = "button"; add.className = "add"; add.textContent = "Add photos";
+    add.onclick = function () { $("file").click(); };
+    host.appendChild(add);
+  }
+
+  function say(t) { $("status").textContent = t; }
+
+  async function addFiles(files) {
+    var list = Array.prototype.filter.call(files, function (f) { return f.type.indexOf("image/") === 0 || /\.(heic|heif)$/i.test(f.name); });
+    if (!list.length) return;
+    var failed = 0, added = [];
+    say("Loading…");
+    for (var i = 0; i < list.length; i++) {
+      var img = new Image(); img.src = URL.createObjectURL(list[i]);
+      try { await img.decode(); added.push({ name: list[i].name || "pasted.png", src: img, w: img.naturalWidth, h: img.naturalHeight }); }
+      catch (e) { failed++; }
+    }
+    if (added.length) {
+      if (isSample) { photos = []; isSample = false; }
+      current = photos.length; photos = photos.concat(added);
+      strip(); render();
+    }
+    say(failed ? failed + " file" + (failed > 1 ? "s" : "") + " could not be opened. Try JPEG or PNG." : added.length + " photo" + (added.length > 1 ? "s" : "") + " added.");
+  }
+
+  function outName(p) { return p.name.replace(/\.[^.]+$/, "") + "-bordered." + S.format; }
+  function blobOf(p) {
+    return new Promise(function (res, rej) {
+      var c = document.createElement("canvas");
+      try { draw(c, p, 1); } catch (e) { return rej(e); }
+      c.toBlob(function (b) { b ? res(b) : rej(new Error("too big")); }, S.format === "jpg" ? "image/jpeg" : "image/png", S.quality / 100);
+    });
+  }
+  async function save(all) {
+    if (busy) return; busy = true;
+    $("saveOne").disabled = $("saveAll").disabled = true;
+    try {
+      var dl = await downloadsP;
+      say("Preparing…");
+      var data, filename;
+      if (all) {
+        var zip = new JSZip(), seen = {};
+        for (var i = 0; i < photos.length; i++) {
+          var n = outName(photos[i]);
+          if (seen[n]) n = (i + 1) + "-" + n;
+          seen[n] = 1;
+          zip.file(n, await blobOf(photos[i]));
+          say("Preparing " + (i + 1) + " of " + photos.length + "…");
+        }
+        data = await zip.generateAsync({ type: "blob", compression: "STORE" });
+        filename = "bordered-photos.zip";
+      } else {
+        data = await blobOf(photos[current]); filename = outName(photos[current]);
+      }
+      if (dl) say("Confirm the save when asked.");
+      if (dl) await dl.save({ filename: filename, data: data });
+      else {
+        var a = document.createElement("a"); a.href = URL.createObjectURL(data); a.download = filename;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 60000);
+      }
+      say("Saved " + filename + ".");
+    } catch (e) {
+      var c = e && e.code;
+      if (c === "declined") say("Save cancelled.");
+      else if (c === "rate_limited") say("A save prompt is already open. Finish that one, then try again.");
+      else if (c) say("Saving isn't available here (" + c + ").");
+      else say("That photo is too large for this browser to export. Try a smaller border or a smaller photo.");
+    } finally {
+      busy = false; $("saveOne").disabled = $("saveAll").disabled = false;
+    }
+  }
+
+  chips($("swatches"), COLORS, "color", $("custom"));
+  chips($("ratios"), RATIOS, "ratio");
+  chips($("formats"), FORMATS, "format");
+  [["border", "border"], ["bottom", "bottom"], ["quality", "quality"]].forEach(function (m) {
+    $(m[0]).oninput = function () { S[m[1]] = +this.value; render(); };
+  });
+  $("custom").oninput = function () { S.color = this.value; sync(); render(); };
+  $("keyline").onchange = function () { S.keyline = this.checked; render(); };
+  $("file").onchange = function () { addFiles(this.files); this.value = ""; };
+  $("saveOne").onclick = function () { save(false); };
+  $("saveAll").onclick = function () { save(true); };
+  var stage = $("stage");
+  document.addEventListener("dragover", function (e) { e.preventDefault(); stage.classList.add("over"); });
+  document.addEventListener("dragleave", function (e) { if (!e.relatedTarget) stage.classList.remove("over"); });
+  document.addEventListener("drop", function (e) { e.preventDefault(); stage.classList.remove("over"); if (e.dataTransfer) addFiles(e.dataTransfer.files); });
+  document.addEventListener("paste", function (e) { if (e.clipboardData && e.clipboardData.files.length) addFiles(e.clipboardData.files); });
+
+  photos = [sample()];
+  sync(); strip(); render();
+  say("Drop photos anywhere, paste one, or choose Add photos.");
+})();
+</script>
+</body>
+</html>
