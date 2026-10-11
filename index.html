@@ -88,6 +88,7 @@ select { font: 14px var(--body); color: var(--fg); background: transparent; bord
         <button type="button" data-p="10">10%</button>
         <button type="button" data-p="15">15%</button>
       </div>
+      <div class="seg"><button type="button" id="polaroid" aria-pressed="false">Polaroid</button></div>
     </div>
     <div class="ctl">
       <span class="cap">Colour</span>
@@ -97,7 +98,7 @@ select { font: 14px var(--body); color: var(--fg); background: transparent; bord
     </div>
     <div class="ctl">
       <label for="finish">Finish</label>
-      <select id="finish"><option value="smooth">Smooth</option><option value="paper">Paper</option><option value="rough">Rough paper</option></select>
+      <select id="finish"><option value="smooth">Smooth</option><option value="paper">Paper</option><option value="rough">Watercolour</option><option value="aged">Aged</option></select>
       <input type="range" id="texture" min="0" max="100" step="5" aria-label="Texture opacity">
       <span class="val" id="textureVal"></span>
     </div>
@@ -139,12 +140,12 @@ select { font: 14px var(--body); color: var(--fg); background: transparent; bord
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
-  var COLORS = [["White", "#ffffff"], ["Ivory", "#f2eee4"], ["Grey", "#8c8c8a"], ["Charcoal", "#2b2b2b"], ["Black", "#000000"]];
+  var COLORS = [["White", "#ffffff"], ["Off-white", "#f9f7f2"], ["Ivory", "#f2eee4"], ["Grey", "#8c8c8a"], ["Charcoal", "#2b2b2b"], ["Black", "#000000"]];
   var RATIOS = [["Original", 0], ["Square", 1], ["5:4", 5 / 4], ["4:3", 4 / 3], ["3:2", 3 / 2], ["16:9", 16 / 9]];
   var S = { border: 6, bottom: 0, color: "#ffffff", ratio: "Original", orient: "", finish: "smooth", texture: 100, keyline: false, format: "jpg", quality: 92 };
   try { Object.assign(S, JSON.parse(localStorage.getItem("border-settings") || "{}")); } catch (e) {}
   if (!RATIOS.some(function (r) { return r[0] === S.ratio; })) S.ratio = "Original";
-  var FINISH = { smooth: null, paper: [7, .5], rough: [13, .95] }, tiles = {};
+  var FINISH = { smooth: null, paper: [7, .5], rough: [13, .95], aged: [60, 0] }, tiles = {};
   if (!(S.finish in FINISH)) S.finish = "smooth";
   function tile(name) {
     if (tiles[name]) return tiles[name];
@@ -167,6 +168,12 @@ select { font: 14px var(--body); color: var(--fg); background: transparent; bord
     for (var yy = 0; yy < N; yy++) for (var xx = 0; xx < N; xx++) {
       var d = (h[yy * N + xx] - h[((yy + N - 1) % N) * N + (xx + N - 1) % N]) * 5, q = (yy * N + xx) * 4;
       d = Math.max(-1, Math.min(1, d));
+      if (name === "aged") {
+        var n = Math.max(0, h[yy * N + xx] / 1.1 - .4) * 2.4; n = Math.min(1, n * n);
+        im.data[q] = 122; im.data[q + 1] = 92; im.data[q + 2] = 52;
+        im.data[q + 3] = rnd() < .0003 ? 170 : 26 + n * 115 + rnd() * 10;
+        continue;
+      }
       im.data[q] = im.data[q + 1] = im.data[q + 2] = d < 0 ? 0 : 255;
       im.data[q + 3] = Math.abs(d) * cfg[1] * 150;
     }
@@ -212,11 +219,27 @@ select { font: 14px var(--body); color: var(--fg); background: transparent; bord
     x.imageSmoothingQuality = "high";
     x.fillStyle = S.color; x.fillRect(0, 0, canvas.width, canvas.height);
     if (FINISH[S.finish]) {
-      var u = k * Math.max(.35, g.s / 1200);
+      var u = k * Math.max(.35, g.s / 1200) * (S.finish === "aged" ? 3.4 : 1);
       x.save(); x.globalAlpha = S.texture / 100; x.scale(u, u); x.fillStyle = x.createPattern(tile(S.finish), "repeat");
       x.fillRect(0, 0, canvas.width / u + 1, canvas.height / u + 1); x.restore();
+      if (S.finish === "aged") {
+        var u2 = k * Math.max(.35, g.s / 1200);
+        x.save(); x.globalAlpha = .6 * S.texture / 100; x.scale(u2, u2); x.fillStyle = x.createPattern(tile("paper"), "repeat");
+        x.fillRect(0, 0, canvas.width / u2 + 1, canvas.height / u2 + 1); x.restore();
+      }
     }
     x.drawImage(p.src, g.x * k, g.y * k, p.w * k, p.h * k);
+    if (S.finish === "aged") {
+      var e = Math.max(4, g.s * .022) * k, cw = canvas.width, ch = canvas.height;
+      x.save(); x.globalAlpha = S.texture / 100;
+      [[0, 0, e, 0, 0, 0, e, ch], [cw, 0, cw - e, 0, cw - e, 0, e, ch], [0, 0, 0, e, 0, 0, cw, e], [0, ch, 0, ch - e, 0, ch - e, cw, e]].forEach(function (q) {
+        var gr = x.createLinearGradient(q[0], q[1], q[2], q[3]); gr.addColorStop(0, "rgba(96,70,38,.32)"); gr.addColorStop(1, "rgba(96,70,38,0)");
+        x.fillStyle = gr; x.fillRect(q[4], q[5], q[6], q[7]);
+      });
+      x.lineWidth = Math.max(1, g.s * .004 * k); x.strokeStyle = "rgba(70,50,25,.4)";
+      x.strokeRect(g.x * k, g.y * k, p.w * k, p.h * k);
+      x.restore();
+    }
     var gap = Math.max(2, Math.round(g.s * .012));
     if (S.keyline && Math.min(g.x, g.y) > gap * 1.5) {
       x.lineWidth = Math.max(1, g.s * .0015 * k); x.strokeStyle = contrast(S.color);
@@ -238,6 +261,7 @@ select { font: 14px var(--body); color: var(--fg); background: transparent; bord
     $("texture").hidden = $("textureVal").hidden = S.finish === "smooth";
     $("qualityField").hidden = S.format !== "jpg";
     $("saveAll").hidden = photos.length < 2;
+    $("polaroid").setAttribute("aria-pressed", String(!!S.polaroid));
     $("presets").querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", String(+b.dataset.p === S.border)); });
     $("landscape").setAttribute("aria-pressed", String(g.W > g.H));
     $("portrait").setAttribute("aria-pressed", String(g.H > g.W));
@@ -348,6 +372,19 @@ select { font: 14px var(--body); color: var(--fg); background: transparent; bord
   ["landscape", "portrait"].forEach(function (o) { $(o).onclick = function () { S.orient = o; render(); }; });
   $("presets").querySelectorAll("button").forEach(function (b) { b.onclick = function () { S.border = +b.dataset.p; sync(); render(); }; });
   $("finish").onchange = function () { S.finish = this.value; render(); };
+  $("polaroid").onclick = function () {
+    var keys = ["border", "bottom", "color", "ratio", "orient", "finish", "keyline"];
+    if (!S.polaroid) {
+      S.prev = {}; keys.forEach(function (k) { S.prev[k] = S[k]; });
+      S.border = 6; S.bottom = 22; S.color = "#f9f7f2"; S.ratio = "Original"; S.orient = ""; S.finish = "smooth"; S.keyline = false;
+      S.polaroid = true;
+    } else {
+      keys.forEach(function (k) { if (S.prev && k in S.prev) S[k] = S.prev[k]; });
+      S.bottom = 0;
+      S.prev = null; S.polaroid = false;
+    }
+    sync(); render();
+  };
   $("format").onchange = function () { S.format = this.value; render(); };
   $("custom").oninput = function () { S.color = this.value; sync(); render(); };
   $("keyline").onchange = function () { S.keyline = this.checked; render(); };
